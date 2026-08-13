@@ -1,5 +1,10 @@
 // TEMPORARY: This uses a fake/mock bot reply.
 // It will be replaced once the real chatbot/backend API is ready.
+//
+// KNOWN LIMITATION (temporary): this mock does not remember conversation
+// context (e.g. it won't recall that you already said "refund" on your next
+// message). Real context/intent handling is owned by the AI/Chatbot teammate
+// and will replace this function entirely once their API is connected.
 
 const chatWindow = document.getElementById("chat-window");
 const chatForm = document.getElementById("chat-form");
@@ -15,8 +20,38 @@ function addMessage(text, sender) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
+function addErrorMessage(retryText) {
+  const bubble = document.createElement("div");
+  bubble.classList.add("message", "error-message");
+
+  const icon = document.createElement("span");
+  icon.classList.add("error-icon");
+  icon.textContent = "⚠️";
+
+  const content = document.createElement("div");
+  content.classList.add("error-content");
+
+  const text = document.createElement("span");
+  text.textContent = "Thunderbot couldn't respond. Please check your connection and try again.";
+
+  const retryButton = document.createElement("button");
+  retryButton.classList.add("retry-link");
+  retryButton.type = "button";
+  retryButton.textContent = "Try again";
+  retryButton.addEventListener("click", function () {
+    bubble.remove();
+    sendMessage(retryText);
+  });
+
+  content.appendChild(text);
+  content.appendChild(retryButton);
+  bubble.appendChild(icon);
+  bubble.appendChild(content);
+  chatWindow.appendChild(bubble);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
 function getMockBotReply(userText) {
-  // TEMPORARY mock logic — real intent detection comes from the AI/Chatbot teammate.
   const lower = userText.toLowerCase();
   if (lower.includes("order")) {
     return "Sure — what is your order number?";
@@ -27,27 +62,51 @@ function getMockBotReply(userText) {
   return "I can help with order status or returns/refunds. Could you tell me which one you need?";
 }
 
-chatForm.addEventListener("submit", function (event) {
-  event.preventDefault();
+// TEMPORARY TEST HOOK: typing "test error" simulates a failed request,
+// so we can build/verify the error UI before the real API exists.
+// Remove this check once real API error handling is in place.
+function simulateApiCall(userText) {
+  return new Promise(function (resolve, reject) {
+    setTimeout(function () {
+      if (userText.toLowerCase() === "test error") {
+        reject(new Error("Simulated network failure"));
+      } else {
+        resolve(getMockBotReply(userText));
+      }
+    }, 700);
+  });
+}
 
-  const userText = chatInput.value.trim();
-  if (userText === "") {
-    return; // handles empty message submission
-  }
-
+function sendMessage(userText) {
   addMessage(userText, "user");
-  chatInput.value = "";
 
   sendButton.disabled = true;
   chatInput.disabled = true;
   typingIndicator.classList.remove("hidden");
 
-  setTimeout(function () {
-    const reply = getMockBotReply(userText);
-    typingIndicator.classList.add("hidden");
-    addMessage(reply, "bot");
-    sendButton.disabled = false;
-    chatInput.disabled = false;
-    chatInput.focus();
-  }, 700);
+  simulateApiCall(userText)
+    .then(function (reply) {
+      addMessage(reply, "bot");
+    })
+    .catch(function () {
+      addErrorMessage(userText);
+    })
+    .finally(function () {
+      typingIndicator.classList.add("hidden");
+      sendButton.disabled = false;
+      chatInput.disabled = false;
+      chatInput.focus();
+    });
+}
+
+chatForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  const userText = chatInput.value.trim();
+  if (userText === "") {
+    return;
+  }
+
+  chatInput.value = "";
+  sendMessage(userText);
 });
