@@ -1,0 +1,230 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --ink: #1b1d2a;
+  --muted: #6b6f80;
+  --user-bubble: #2b2f77;
+  --orb-a: #4f6bff;
+  --orb-b: #7ee8e0;
+  --radius: 16px; /* single radius scale used everywhere, no random rounding */
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 20% 20%, #dfe6ff 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, #dff7f2 0%, transparent 45%),
+    #eef0f7;
+}
+
+#app {
+  width: 100%;
+  max-width: 420px;
+  height: 90vh;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 30px rgba(30, 42, 120, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* --- Header --- */
+#chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.header-text p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* --- Signature element: the orb --- */
+.orb {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: conic-gradient(from 0deg, var(--orb-a), var(--orb-b), var(--orb-a));
+  box-shadow: 0 0 16px rgba(79, 107, 255, 0.5);
+  animation: spin 4s linear infinite, pulse 3s ease-in-out infinite;
+}
+
+.orb-small {
+  width: 18px;
+  height: 18px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(79, 107, 255, 0.4); }
+  50% { box-shadow: 0 0 22px rgba(126, 232, 224, 0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb {
+    animation: none;
+  }
+}
+
+/* --- Chat window --- */
+#chat-window {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  max-width: 75%;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.bot-message {
+  background: rgba(255, 255, 255, 0.8);
+  align-self: flex-start;
+}
+
+.user-message {
+  background: linear-gradient(135deg, rgba(79, 107, 255, 0.35), rgba(126, 232, 224, 0.35));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--ink);
+  align-self: flex-end;
+  box-shadow: 0 2px 10px rgba(79, 107, 255, 0.15);
+}
+
+.error-message {
+  background: #fdeaea;
+  color: #a33;
+  align-self: flex-start;
+}
+
+/* --- Typing indicator --- */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.typing-indicator.hidden {
+  display: none;
+}
+
+/* --- Input area --- */
+#chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,0.5);
+}
+
+#chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.8);
+  font-size: 0.95rem;
+}
+
+#chat-input:focus {
+  outline: 2px solid var(--orb-a);
+  outline-offset: 1px;
+}
+
+#send-button {
+  background: linear-gradient(135deg, rgba(79, 107, 255, 0.55), rgba(126, 232, 224, 0.55));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.15s ease;
+}
+
+#send-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+#send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* --- Error message --- */
+.error-message {
+  background: #fdeceb;
+  color: #9c2c2c;
+  align-self: flex-start;
+  border: 1px solid rgba(156, 44, 44, 0.25);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.error-icon {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.retry-link {
+  background: none;
+  border: none;
+  color: #9c2c2c;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  align-self: flex-start;
+}
+
+.retry-link:hover {
+  opacity: 0.8;
+}
