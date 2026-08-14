@@ -1,10 +1,11 @@
-// TEMPORARY: This uses a fake/mock bot reply.
-// It will be replaced once the real chatbot/backend API is ready.
-//
-// KNOWN LIMITATION (temporary): this mock does not remember conversation
-// context (e.g. it won't recall that you already said "refund" on your next
-// message). Real context/intent handling is owned by the AI/Chatbot teammate
-// and will replace this function entirely once their API is connected.
+// TEMPORARY: Mock bot replies are used until the real chatbot API is ready.
+// Once Faith (AI/Chatbot Engineer) provides the real endpoint:
+//   1. Set USE_REAL_API to true
+//   2. Set API_URL to the real endpoint
+// Everything else should work unchanged.
+
+const USE_REAL_API = false; // ← flip this to true once the real API is ready
+const API_URL = "https://PLACEHOLDER-api-not-real-yet.example.com/chat"; // ← replace with Faith's real URL
 
 const chatWindow = document.getElementById("chat-window");
 const chatForm = document.getElementById("chat-form");
@@ -62,9 +63,7 @@ function getMockBotReply(userText) {
   return "I can help with order status or returns/refunds. Could you tell me which one you need?";
 }
 
-// TEMPORARY TEST HOOK: typing "test error" simulates a failed request,
-// so we can build/verify the error UI before the real API exists.
-// Remove this check once real API error handling is in place.
+// TEMPORARY TEST HOOK: typing "test error" simulates a failed request.
 function simulateApiCall(userText) {
   return new Promise(function (resolve, reject) {
     setTimeout(function () {
@@ -77,6 +76,29 @@ function simulateApiCall(userText) {
   });
 }
 
+// REAL API call — this is what actually talks to Faith's chatbot backend.
+// Expects: POST request, JSON body { message: "..." }
+// Expects response: JSON body { reply: "..." }
+// Adjust field names here ONLY if Faith's contract uses different keys.
+function callRealApi(userText) {
+  return fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message: userText })
+  })
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("Server responded with an error: " + response.status);
+      }
+      return response.json();
+    })
+    .then(function (data) {
+      return data.reply;
+    });
+}
+
 function sendMessage(userText) {
   addMessage(userText, "user");
 
@@ -84,11 +106,14 @@ function sendMessage(userText) {
   chatInput.disabled = true;
   typingIndicator.classList.remove("hidden");
 
-  simulateApiCall(userText)
+  const apiCall = USE_REAL_API ? callRealApi(userText) : simulateApiCall(userText);
+
+  apiCall
     .then(function (reply) {
       addMessage(reply, "bot");
     })
-    .catch(function () {
+    .catch(function (err) {
+      console.error("Chat request failed:", err);
       addErrorMessage(userText);
     })
     .finally(function () {
