@@ -52,7 +52,21 @@ function addErrorMessage(retryText) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
+// Recognizes Northstar order ID format: letters followed by digits, e.g. "NS1042".
+// Looks for this pattern anywhere in the message, not just as the whole message,
+// so "my order is NS1042" and "NS1042" alone both work.
+function extractOrderId(text) {
+  const match = text.match(/\b([A-Z]{2}\d{3,8})\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
 function getMockBotReply(userText) {
+  const orderId = extractOrderId(userText);
+  if (orderId) {
+    // TEMPORARY: real order lookup comes from the backend once connected.
+    return `Got it — looking up order ${orderId}. (This is placeholder data until connected to the real order lookup.)`;
+  }
+
   const lower = userText.toLowerCase();
   if (lower.includes("order")) {
     return "Sure — what is your order number?";
