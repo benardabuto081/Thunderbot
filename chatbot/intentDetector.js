@@ -10,10 +10,19 @@ const intentsData = require("./intents.json");
  * "refund for my order"), and would otherwise be wrongly caught by the
  * more generic ORDER_STATUS check.
  *
+ * Handles unexpected input safely: empty strings, null, undefined, or
+ * non-string values all return "UNKNOWN" instead of crashing. A crashed
+ * chatbot is worse than one that just says "I didn't understand that."
+ *
  * @param {string} message - The raw customer message.
- * @returns {string} The detected intent name, or "UNKNOWN" if no match.
+ * @returns {string} The detected intent name, or "UNKNOWN" if no match
+ *   or if the input isn't usable text.
  */
 function detectIntent(message) {
+  if (typeof message !== "string" || message.trim().length === 0) {
+    return "UNKNOWN";
+  }
+
   const normalizedMessage = message.toLowerCase();
 
   const refundStatusKeywords = [
