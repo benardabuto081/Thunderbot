@@ -1,5 +1,6 @@
 const express = require('express');
 const pool = require('./db');
+const cors = require('cors');
 const chatRoutes = require('./routes/chatRoutes');
 // IMPORT LINE: Pull in your new return routes file
 const returnRoutes = require('./routes/returnRoutes');
@@ -8,6 +9,7 @@ const PORT = 3000;
 // Required so POST request bodies (like /chat's { message, orderId })
 // are parsed into req.body. Without this, req.body is undefined.
 app.use(express.json());
+app.use(cors());
 // MOUNTING LINE: Connect your path to the main application traffic
 app.use('/api/returns', returnRoutes);
 app.get('/health', function (req, res) {
