@@ -10,6 +10,15 @@ const intentsData = require("./intents.json");
  * "refund for my order"), and would otherwise be wrongly caught by the
  * more generic ORDER_STATUS check.
  *
+ * Keywords are deliberately specific phrases rather than single generic
+ * words like "back" or "money" — those caused false positives (e.g.
+ * "get back to my account", "how much money does shipping cost") when
+ * matched with simple substring checks. The one exception is the
+ * "send" + "back" pair below, which requires BOTH words to appear
+ * together (not a single word) — specific enough to avoid false
+ * positives, flexible enough to catch phrasing like "send this item
+ * back" without needing an exact phrase match.
+ *
  * Handles unexpected input safely: empty strings, null, undefined, or
  * non-string values all return "UNKNOWN" instead of crashing. A crashed
  * chatbot is worse than one that just says "I didn't understand that."
@@ -29,12 +38,13 @@ function detectIntent(message) {
     "refund",
     "money back",
     "reimburse",
-    "money",
+    "get my money",
+    "where's my money",
+    "wheres my money",
   ];
 
   const returnRequestKeywords = [
     "return",
-    "back",
     "exchange",
     "doesn't fit",
     "wrong size",
@@ -58,10 +68,17 @@ function detectIntent(message) {
     return "REFUND_STATUS";
   }
 
-  const matchesReturnRequest = returnRequestKeywords.some((keyword) =>
+  // "send" and "back" both appearing (in either order, anywhere in the
+  // message) is a strong, specific signal for a return request, without
+  // being as broad as matching "back" alone.
+  const matchesSendBack =
+    normalizedMessage.includes("send") && normalizedMessage.includes("back");
+
+  const matchesReturnRequestKeyword = returnRequestKeywords.some((keyword) =>
     normalizedMessage.includes(keyword)
   );
-  if (matchesReturnRequest) {
+
+  if (matchesReturnRequestKeyword || matchesSendBack) {
     return "RETURN_REQUEST";
   }
 
