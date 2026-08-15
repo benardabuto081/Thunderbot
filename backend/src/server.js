@@ -1,18 +1,18 @@
 const express = require('express');
 const pool = require('./db');
 const chatRoutes = require('./routes/chatRoutes');
-
+// IMPORT LINE: Pull in your new return routes file
+const returnRoutes = require('./routes/returnRoutes');
 const app = express();
 const PORT = 3000;
-
 // Required so POST request bodies (like /chat's { message, orderId })
 // are parsed into req.body. Without this, req.body is undefined.
 app.use(express.json());
-
+// MOUNTING LINE: Connect your path to the main application traffic
+app.use('/api/returns', returnRoutes);
 app.get('/health', function (req, res) {
   res.status(200).json({ status: 'ok' });
 });
-
 app.get('/orders/:id', async function (req, res) {
   const orderId = req.params.id;
   try {
@@ -31,9 +31,7 @@ app.get('/orders/:id', async function (req, res) {
     res.status(500).json({ error: 'Something went wrong' });
   }
 });
-
 app.use(chatRoutes);
-
 app.listen(PORT, function () {
   console.log('Server is running on http://localhost:' + PORT);
 });
