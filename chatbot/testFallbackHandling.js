@@ -29,8 +29,9 @@ trickyInputs.forEach((input) => {
   }
 });
 
-console.log(
-  crashed
-    ? "\nSome inputs crashed the chatbot — this must be fixed before shipping."
-    : "\nNo crashes. The chatbot handled all tricky inputs safely."
-);
+if (crashed) {
+  console.log("\nSome inputs crashed the chatbot — this must be fixed before shipping.");
+  process.exit(1);
+}
+
+console.log("\nNo crashes. The chatbot handled all tricky inputs safely.");
