@@ -109,13 +109,12 @@ function callRealApi(userText) {
       return response.json();
     })
     .then(function (data) {
-  if (data.error) {
-    throw new Error(data.error);
-  }
-  return `Your order ${data.orderId} is currently "${data.status}", expected delivery ${data.deliveryDate}.`;
-});
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      return data.reply;
+    });
 }
-
 function sendMessage(userText) {
   addMessage(userText, "user");
 
