@@ -1,5 +1,5 @@
 const { detectIntent } = require("./intentDetector");
-const { getOrderStatus } = require("./mockOrderService");
+const { getOrderStatus } = require("./orderService");
 
 /**
  * Generates the chatbot's reply to a customer message.
@@ -50,18 +50,15 @@ function generateResponse(message) {
  * Once the customer has provided an order ID (as a follow-up to
  * ORDER_STATUS intent), this looks it up and generates the real reply.
  *
- * Uses getOrderStatus, which currently points at a local mock
- * (mockOrderService.js) mirroring the real backend's response shape
- * (GET /orders/:id from PR #22) — statusCode + body, matching what a
- * real HTTP call will return. Swapping the mock for a real HTTP call
- * later should not require changes to the reply logic below, only to
- * how getOrderStatus itself fetches the data.
+ * Uses getOrderStatus from orderService.js, which makes a real HTTP
+ * request to the backend and therefore returns a Promise — this
+ * function must be async and await it.
  *
  * @param {string} orderId
- * @returns {{ reply: string }}
+ * @returns {Promise<{ reply: string }>}
  */
-function generateOrderStatusReply(orderId) {
-  const result = getOrderStatus(orderId);
+async function generateOrderStatusReply(orderId) {
+  const result = await getOrderStatus(orderId);
 
   if (result.statusCode === 404) {
     return {
