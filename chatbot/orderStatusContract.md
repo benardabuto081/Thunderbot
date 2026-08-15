@@ -1,55 +1,48 @@
-# Order Status API — Expected Contract
+# Order Status API — Contract
 
-**Status:** Draft — written by the Chatbot Engineer (Faith) ahead of backend
-implementation, so the Backend Engineer (josephwakaro) can build Issue #5
-knowing what shape the chatbot expects. Open to discussion/change.
+**Status:** Reflects the actual backend implementation in PR #22
+(`backend/src/server.js`), verified directly against the source code.
+Previously this file proposed a different shape before the real API
+existed — this version replaces that proposal with the real contract.
 
-## What the chatbot needs
+## Endpoint
+Example: `GET /orders/NS1042`
 
-When a customer asks about their order (e.g. "Where is my order?"), the
-chatbot will ask for an order ID, then needs to call a function to look
-up that order's status.
-
-## Expected function signature
-
-```js
-getOrderStatus(orderId: string)
-```
-
-## Expected successful response shape
+## Successful response (HTTP 200)
 
 ```json
 {
-  "found": true,
+  "orderId": "NS1042",
   "status": "shipped",
-  "expectedDelivery": "2026-08-16"
+  "deliveryDate": "2026-08-20"
 }
 ```
 
-## Expected "not found" response shape
+## Order not found (HTTP 404)
 
 ```json
 {
-  "found": false,
-  "reason": "No order found with that ID."
+  "error": "Order not found"
 }
 ```
 
-## Why this shape
+## Server error (HTTP 500)
 
-- `found` lets the chatbot distinguish "valid order, here's the status"
-  from "invalid/unknown order ID" without relying on error codes or
-  exceptions — keeps the chatbot's response logic simple and predictable.
-- `status` and `expectedDelivery` are the two facts the chatbot actually
-  needs to answer a customer's question. Any extra fields (e.g. full
-  shipping address, item list) aren't needed by the chatbot and can be
-  omitted from what it receives, though the backend/database may of
-  course store more.
+```json
+{
+  "error": "Something went wrong"
+}
+```
 
 ## Notes
 
-- This is a starting proposal, not a final decision — happy to adjust
-  once the Backend Engineer starts building Issue #5.
-- Until this function exists for real, the chatbot uses a local mock
-  (see `mockOrderService.js`) that returns fake data in this exact shape,
-  so chatbot logic can be built and tested independently.
+- This replaces an earlier draft contract that used a different shape
+  (`{ found, status, expectedDelivery }`). That was a reasonable proposal
+  made before the backend existed, but the real implementation differs
+  slightly (uses HTTP status codes instead of a `found` boolean, and
+  `orderId`/`deliveryDate` instead of `expectedDelivery`). This document
+  now reflects reality.
+- The chatbot-side mock (`mockOrderService.js`) has been updated to
+  mirror this exact shape, so no further contract changes should be
+  needed once the real backend is connected — only swapping which file
+  is imported.
