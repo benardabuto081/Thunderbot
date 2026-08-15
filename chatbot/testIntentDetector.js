@@ -1,24 +1,38 @@
 const { detectIntent } = require("./intentDetector");
 const intentsData = require("./intents.json");
 
-// Grab the ORDER_STATUS examples we defined in Task 1
-const orderStatusIntent = intentsData.intents.find(
-  (intent) => intent.name === "ORDER_STATUS"
-);
+/**
+ * Runs every example message for a given intent through detectIntent
+ * and reports how many passed.
+ */
+function testIntent(intentName) {
+  const intent = intentsData.intents.find((i) => i.name === intentName);
 
-console.log("Testing ORDER_STATUS detection:\n");
+  console.log(`\nTesting ${intentName} detection:`);
 
-let passCount = 0;
+  let passCount = 0;
 
-orderStatusIntent.examples.forEach((message) => {
-  const result = detectIntent(message);
-  const passed = result === "ORDER_STATUS";
+  intent.examples.forEach((message) => {
+    const result = detectIntent(message);
+    const passed = result === intentName;
 
-  if (passed) passCount++;
+    if (passed) passCount++;
 
-  console.log(
-    `${passed ? "PASS" : "FAIL"} | "${message}" -> detected: ${result}`
-  );
-});
+    console.log(
+      `${passed ? "PASS" : "FAIL"} | "${message}" -> detected: ${result}`
+    );
+  });
 
-console.log(`\n${passCount}/${orderStatusIntent.examples.length} passed.`);
+  console.log(`${passCount}/${intent.examples.length} passed.`);
+
+  return passCount === intent.examples.length;
+}
+
+const orderStatusOk = testIntent("ORDER_STATUS");
+const returnRequestOk = testIntent("RETURN_REQUEST");
+const refundStatusOk = testIntent("REFUND_STATUS");
+
+console.log("\n--- Summary ---");
+console.log(`ORDER_STATUS:   ${orderStatusOk ? "ALL PASSED" : "SOME FAILED"}`);
+console.log(`RETURN_REQUEST: ${returnRequestOk ? "ALL PASSED" : "SOME FAILED"}`);
+console.log(`REFUND_STATUS:  ${refundStatusOk ? "ALL PASSED" : "SOME FAILED"}`);
