@@ -1,67 +1,82 @@
-ï»¿# Architecture & Interface Document
-
-**Thunderbot â€” PLP Group 90 â€” Northstar Sprint**
+# Architecture & Interface Document
+**Thunderbot — PLP Group 90 — Northstar Sprint**
 
 ## System Overview
-
-Thunderbot is a customer-service chatbot for order status and returns/refunds, built as a three-tier system: a static frontend chat UI, a Node.js/Express backend with PostgreSQL, and a chatbot intent-handling layer connecting the two.
+Thunderbot is a customer-service chatbot for order status and
+returns/refunds, built as a three-tier system: a static frontend chat
+UI, a chatbot intent-handling layer, and a Node.js/Express backend
+with PostgreSQL. As of this update, all three tiers are live and
+connected end-to-end.
 
 ## Components
 
 ### Backend (backend/)
-
 - Stack: Node.js, Express, PostgreSQL
 - Entry point: backend/src/server.js
-- Database: Initialized via backend/src/init-db.sql. Full schema, relationships, and sample data documented in docs/schema.md.
-- Confirmed live endpoints:
+- Database: Initialized via backend/src/init-db.sql. Full schema,
+  relationships, and sample data documented in docs/schema.md.
+- Live endpoints:
   - GET /health - returns 200 {"status":"ok"}
-  - GET /orders/:id - looks up an order by ID, returns 404 with { error: 'Order not found' } if no match, otherwise returns the order record.
-- Data layer ready, route not yet exposed:
-  - Database includes a returns table (order_id, reason, status - pending/approved/rejected), already created via init-db.sql. See docs/schema.md.
-  - backend/src/services/returnService.js and refundService.js contain the eligibility logic.
-  - No route in server.js currently connects the two. POST /returns does not yet exist as an endpoint, despite both the table and the service logic being in place.
+  - GET /orders/:id - looks up an order by ID, returns 404 with
+    { error: "Order not found" } if no match, otherwise returns
+    { orderId, status, deliveryDate }
+  - POST /chat - accepts { message, orderId (optional) }, runs intent
+    detection, returns { intent, reply }
+  - POST /api/returns/check - accepts { item, daysSinceDelivery,
+    context }, returns { success, isEligible, reason, message }
+    (validates on submitted data, not yet a database order lookup -
+    see docs/INTEGRATION_STATUS.md)
+- Middleware: express.json() (parses POST bodies), cors() (allows
+  cross-origin requests from the frontend)
 
-### Chatbot Layer
-
-- Intended to sit between the frontend chat UI and the backend, translating user messages into intents (e.g. "check my order," "start a return") and calling the relevant backend endpoint.
-- Status at time of writing: unconfirmed/in progress. Intent-handling work may exist on an unmerged branch, feature/chatbot-intents.
-- Issue #7 ("Connect chatbot to Order Status backend") remains open on the board, consistent with this gap.
+### Chatbot Layer (chatbot/)
+- Sits between the frontend and backend, translating user messages
+  into intents and generating replies.
+- chatbot/intentDetector.js - keyword-based classification into
+  ORDER_STATUS, RETURN_REQUEST, REFUND_STATUS, or UNKNOWN
+- chatbot/responseHandler.js - generateResponse() for intent-based
+  replies, generateOrderStatusReply() for real order lookups (async,
+  calls orderService.js)
+- chatbot/orderService.js - real HTTP client calling the backend's
+  GET /orders/:id
+- Exposed to the frontend via backend/src/routes/chatRoutes.js
+  (POST /chat)
 
 ### Frontend (frontend/)
-
 - Entry point: frontend/script.js, static chat UI
-- Order ID extraction: extractOrderId(text) - pulls an order ID out of free-text user input. Expected format: letters followed by digits (e.g. NS1042).
-- API integration: callRealApi() exists and is correctly shaped to call a /chat endpoint, but is currently inactive.
-  - USE_REAL_API = false
-  - API_URL is a placeholder value, not a real endpoint
-- Current behavior: all chat replies come from getMockBotReply(), a scripted response function. The mock order-status reply includes a visible in-chat disclosure: "(Demo data - live order lookup isn't connected yet.)"
+- Order ID extraction: extractOrderId(text) - pulls an order ID out
+  of free-text user input. Expected format: letters followed by
+  digits (e.g. NS1042).
+- API integration: USE_REAL_API = true. callRealApi() calls the real
+  POST /chat endpoint - no mock replies in normal operation.
 
-## Data Flow (Current, Actual State)
-
-    User types message
-          |
-    frontend/script.js -> extractOrderId()
-          |
-    getMockBotReply()  [ACTIVE - scripted reply, disclosed as demo data]
-          |
-    Displayed in chat UI
-
-    callRealApi() -> /chat endpoint  [BUILT, NOT ACTIVE - USE_REAL_API is false]
-
-## Data Flow (Intended, Once Fully Wired)
+## Data Flow (Current, Live)
 
     User types message
           |
-    frontend/script.js -> callRealApi() -> chatbot /chat endpoint
+    frontend/script.js -> callRealApi() -> POST /chat
           |
-    Chatbot intent handler determines intent
+    backend/src/routes/chatRoutes.js
           |
-       |- Order status intent -> GET /orders/:id (backend, LIVE)
-       |- Returns intent      -> POST /returns (backend, NOT YET BUILT)
+    chatbot/responseHandler.js -> detectIntent()
           |
-    Response returned to frontend, displayed in chat
+       |- ORDER_STATUS + orderId -> orderService.js -> GET /orders/:id (live DB lookup)
+       |- RETURN_REQUEST/REFUND_STATUS -> clarifying reply (asks for details)
+       |  (POST /api/returns/check exists and is live, but not yet
+       |   called automatically by the chat flow - see
+       |   docs/INTEGRATION_STATUS.md)
+       |- UNKNOWN -> fallback reply
+          |
+    { intent, reply } returned to frontend, displayed in chat UI
+
+## Contract Reference
+
+Full request/response shapes for each endpoint, including error
+cases, are documented in:
+- chatbot/orderStatusContract.md (Order Status)
+- docs/schema.md (database schema, sample data, local setup)
 
 ## Related Documents
-
-- docs/schema.md - full database schema, relationships, sample data, and local setup instructions
-- docs/INTEGRATION_STATUS.md - honest breakdown of what's live vs. simulated at submission time
+- docs/schema.md - full database schema, relationships, sample data,
+  and local setup instructions
+- docs/INTEGRATION_STATUS.md - current live/limitation breakdown
