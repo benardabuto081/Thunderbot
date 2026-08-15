@@ -4,8 +4,8 @@
 //   2. Set API_URL to the real endpoint
 // Everything else should work unchanged.
 
-const USE_REAL_API = false; // ← flip this to true once the real API is ready
-const API_URL = "https://PLACEHOLDER-api-not-real-yet.example.com/chat"; // ← replace with Faith's real URL
+const USE_REAL_API = true;
+const API_URL = "http://localhost:3000/chat";
 
 const chatWindow = document.getElementById("chat-window");
 const chatForm = document.getElementById("chat-form");
