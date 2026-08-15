@@ -63,8 +63,9 @@ function extractOrderId(text) {
 function getMockBotReply(userText) {
   const orderId = extractOrderId(userText);
   if (orderId) {
-    // TEMPORARY: real order lookup comes from the backend once connected.
-    return `Got it — looking up order ${orderId}. (This is placeholder data until connected to the real order lookup.)`;
+    // TEMPORARY: this is demo/mock data. Real lookup comes from the
+    // backend once /chat is connected — see README for integration status.
+    return `Thanks — I found order ${orderId}. It's currently in transit and expected to arrive within 3–5 business days. (Demo data — live order lookup isn't connected yet.)`;
   }
 
   const lower = userText.toLowerCase();
