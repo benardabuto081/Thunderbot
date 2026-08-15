@@ -1,8 +1,17 @@
 const express = require('express');
 const pool = require('./db');
 
+// IMPORT LINE: Pull in your new return routes file
+const returnRoutes = require('./routes/returnRoutes');
+
 const app = express();
 const PORT = 3000;
+
+// MIDDLEWARE: This must be here so your server can read incoming data packets!
+app.use(express.json());
+
+// MOUNTING LINE: Connect your path to the main application traffic
+app.use('/api/returns', returnRoutes);
 
 app.get('/health', function (req, res) {
   res.status(200).json({ status: 'ok' });
