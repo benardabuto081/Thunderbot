@@ -109,8 +109,11 @@ function callRealApi(userText) {
       return response.json();
     })
     .then(function (data) {
-      return data.reply;
-    });
+  if (data.error) {
+    throw new Error(data.error);
+  }
+  return `Your order ${data.orderId} is currently "${data.status}", expected delivery ${data.deliveryDate}.`;
+});
 }
 
 function sendMessage(userText) {
